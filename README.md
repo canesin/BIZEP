@@ -1,4 +1,4 @@
 BEM
 ===
 
-Boundary element method solver for poroplastic well
+Boundary element method solver for plasticity
