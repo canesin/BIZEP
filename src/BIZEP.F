@@ -1,24 +1,57 @@
-C.... $ RESET FREE SET LIST LINEINFO
-C.... FILE  5=FILE5,UNIT=READER
-C.... FILE  6=FILE6,UNIT=PRINTER
 C.... PROGRAM FOR SOLUTION OF TWO DIMENSIONAL
 C.... NON-LINEAR MATERIAL PROBLEMS BY THE
 C.... BOUNDARY ELEMENT METHOD
 C.... J. C. DE FARIA TELLES
+C.... =================================================================
+C.... NE - number of elements
+C.... NC - ???
+C.... NN - Numbert of nodes
+C.... NP - Number of internal points
+C.... IPL - Index for type of problem, 1-plane stress/2-plane strain
+C.... E - Youngs modulus
+C.... ET - ???
+C.... SY - ???
+C.... PO - Poissons Ratio
+C.... NN2 - Number of nodes times 2, NN2=2*NN
+C.... NT - Internal + boundary nodes, NT = NN + NP
+C.... NT3 - ???
+C.... C1 to C11 - Constants needed by fundamental solution
+C.... PER - ???
+C.... SM - ???
+C.... C12 - ???
+C.... HL - ???
+C.... IDSYM - Symmetry index (0-no sym, 1-y sym, 2-x sym, 3-xy sym)
+C.... XSYM - X coordinates of symmetry plane
+C.... YSYM - Y coordinates of symmetry plane
+C.... INFB - Infinite boundary index (1-infinite case, 0-bounded case)
+C.... C13 to C18 - ???
+C.... SNPHI - ???
+C.... IYIED - ???
+C.... ITECH - ???
+C.... D - Kronecker delta
+C.... XI - Acissas of Gaussian integration points
+C.... W - Weights of Gausssian integration points
+C.... IDUP - Double nodes vector (=0 no double node, =N N double nodes)
+C.... =================================================================
       COMMON /RW/ IRE,IWR
       COMMON /A/ X(73),Y(73),D(2,2),A(6,3),W(6,3)
       COMMON /A1/ ISYM(73),INC(33,2),IDUP(73),ICC(110,3),AR(110),C(33)
       COMMON /A2/ DI(219,219),DB(76,219)
       COMMON /A3/ IFIP(76),U(76),P(76),S(73,4),SR(219),DSR(219),DSE(219)
      *,XM(76),XN(219),EPE(73),DEPE(73),SR3(73),SEQ(73),ASEQ(73),DSR3(73)
+C.... BIND INPUTE AND OUTPUT FILES TO IRE AND IRW VARIABLES
+      OPEN(UNIT=11, FILE="input.dat")
+      OPEN(UNIT=12, FILE="results.out")
 C.... INPUT
-      IRE=5
-      IWR=6
+      IRE=11
+      IWR=12
       TOL=0.001
       J=0
+
       CALL INPUT(NE,NC,NN,NP,IPL,E,ET,SY,PO,NN2,NT,NT3,C1,C2,
      *C3,C4,C5,C6,C7,C8,C9,C10,C11,PER,SM,C12,HL,IDSYM,XSYM,YSYM,INFB,
      *C13,C14,C15,C16,C17,C18,SNPHI,IYIED,ITECH)
+
 C.... COMPUTE MATRICES
       CALL MATRX(NE,NC,NN,NN2,NT,NT3,C1,C2,C3,C4,C5,C6,C7,C8
      *,C9,C10,C11,PO,IDSYM,XSYM,YSYM,INFB,C15,C16,C17,C18)
