@@ -1,16 +1,20 @@
+C.... =================================================================
 C.... PROGRAM FOR SOLUTION OF TWO DIMENSIONAL
 C.... NON-LINEAR MATERIAL PROBLEMS BY THE
 C.... BOUNDARY ELEMENT METHOD
 C.... J. C. DE FARIA TELLES
 C.... =================================================================
-C.... NE - number of elements
-C.... NC - ??? number of connections
-C.... NN - Numbert of nodes
+C.... NE - Number of elements
+C.... NC - Number of cells
+C.... NN - Number of nodes
 C.... NP - Number of internal points
 C.... IPL - Index for type of problem, 1-plane stress/2-plane strain
 C.... E - Youngs modulus
-C.... ET - Hardening slope (from Eq. 6.11/6.12)
+C.... ET - Hardening slope for computation of H' (from Eq. 6.11/6.12)
+C.... HL - H' for Taylor series approximation of stress
 C.... SY - ???
+C.... CC - Cohesion
+C.... PHI - Internal Friction angle [in deg]
 C.... PO - Poissons Ratio
 C.... NN2 - Number of nodes times 2, NN2=2*NN
 C.... NT - Internal + boundary nodes, NT = NN + NP
@@ -19,7 +23,6 @@ C.... C1 to C11 - Constants needed by fundamental solution
 C.... PER - ???
 C.... SM - ???
 C.... C12 - ???
-C.... HL - ???
 C.... IDSYM - Symmetry index (0-no sym, 1-y sym, 2-x sym, 3-xy sym)
 C.... XSYM - X coordinates of symmetry plane
 C.... YSYM - Y coordinates of symmetry plane
@@ -40,12 +43,14 @@ C.... =================================================================
       COMMON /A2/ DI(219,219),DB(76,219)
       COMMON /A3/ IFIP(76),U(76),P(76),S(73,4),SR(219),DSR(219),DSE(219)
      *,XM(76),XN(219),EPE(73),DEPE(73),SR3(73),SEQ(73),ASEQ(73),DSR3(73)
-C.... BIND INPUTE AND OUTPUT FILES TO IRE AND IRW VARIABLES
+
+C.... BIND INPUT AND OUTPUT FILES TO IRE AND IRW VARIABLES
       OPEN(UNIT=11, FILE="src/input.dat", STATUS='OLD')
       OPEN(UNIT=12, FILE="src/results.out")
-C.... INPUT
       IRE=11
       IWR=12
+
+C.... TOLERANCE FOR ??
       TOL=0.001
       J=0
 
@@ -107,10 +112,11 @@ C.... TITLE OF PROBLEM
     2 FORMAT(A)
 
 C.... GENERAL INFORMATION ABOUT THE PROBLEM
-      READ(IRE, 3) INFB, ITECH, NE, NC, NN, NP, IPL, IDSYM
-    3 FORMAT(2I1, I3, 5I5)
-      READ(IRE, 70) IYIED, E, ET, SY, PO, CC, PHI
-   70 FORMAT(I5, 6F10.0)
+      READ(IRE, *) INFB, ITECH, NE, NC, NN, NP, IPL, IDSYM
+
+C.... LOAD MATERIAL PROPERTIES AND YEILD CRITERIA
+      READ(IRE, *) IYIED, E, ET, SY, PO, CC, PHI
+
       SNPHI=SIN(PHI*0.017453292)
       GO TO (71,71,72,73,80), IYIED
    72 SY=CC*COS(PHI*0.017453292)
@@ -118,37 +124,45 @@ C.... GENERAL INFORMATION ABOUT THE PROBLEM
    73 SY=6.*CC*COS(PHI*0.017453292)/(1.73205080757*(3.-SNPHI))
       GO TO 71
    80 SY=1.73205080757*CC*COS(PHI*0.017453292)/SQRT(3.+SNPHI**2)
+
    71 IF(INFB.EQ.0)GO TO 60
+
       WRITE(IWR,61)
    61 FORMAT(//,13X,'* INFINITE BOUNDARY *')
-   60 IF(ITECH.EQ.0)WRITE(IWR,62)
+
+   60 IF(ITECH.EQ.0) WRITE(IWR,62)
    62 FORMAT(//,13X,'* STANDARD IN. STR. *')
+
       IF(ITECH.NE.0)WRITE(IWR,63)
    63 FORMAT(//,13X,'* MODIFIED IN. STR. *')
-      WRITE(IWR,4)NE,NC,NN,NP,IPL,IDSYM
+
+      WRITE(IWR, 4) NE, NC, NN, NP, IPL, IDSYM
     4 FORMAT(//,15X,'NO. ELEMENTS =',I5,//,15X,'NO.    CELLS =',I5,//,15
      *X,'NO.    NODES =',I5,//,15X,'NO.   POINTS =',I5,//,15X,'PROBL.  T
      *YPE =',I5,//,15X,'SYMME.  TYPE =',I5)
-      WRITE(IWR,74)IYIED,E,ET,SY,PO,CC,PHI
+
+      WRITE(IWR,74) IYIED, E, ET, SY, PO, CC, PHI
    74 FORMAT(//,15X,'MATERIAL PROPERTIES',//,15X,'Y. CRIT.=',I10,
      *//,15X,'E       =',F10.0,//,15X,'ET      =',F10.0,//,15X,
      *'FY      =',F15.5,//,15X,'POISSON =',F15.5,//,15X,'C       =',
      *F15.5,//,15X,'PHI     =',F15.5,///,30X,'COORDINATES OF BOUNDARY NO
      *DES',//,12X,'NODE',14X,'X',15X,'Y',/)
+
       NN2=NN*2
       NT=NN+NP
       NT3=3*NT
 C.... NODES AND POINTS COORDINATES
       DO 5 I=1,NT
-      READ(IRE,6)K,X(K),Y(K),IDUP(K),ISYM(K)
-    6 FORMAT(I5,2F10.0,2I5)
-      IF(IDUP(K).EQ.0)GO TO 5
-      J=IDUP(K)
-      IDUP(J)=K
-      X(K)=X(J)
-      Y(K)=Y(J)
+        READ(IRE,6) K, X(K), Y(K), IDUP(K), ISYM(K)
+    6   FORMAT(I5,2F10.0,2I5)
+        IF(IDUP(K).EQ.0) GO TO 5
+        J=IDUP(K)
+        IDUP(J)=K
+        X(K)=X(J)
+        Y(K)=Y(J)
     5 CONTINUE
-      WRITE(IWR,7)(K,X(K),Y(K),K=1,NN)
+
+      WRITE(IWR,7) (K, X(K), Y(K), K=1, NN)
     7 FORMAT(10X,I5,5X,F15.4,1X,F15.4)
       IF(NP.EQ.0)GO TO 9
       WRITE(IWR,8)
@@ -204,8 +218,10 @@ C.... CELLS CONNECTIVITY
       WRITE(IWR,18)(I,ICC(I,1),ICC(I,2),ICC(I,3),AR(I),I=1,NC)
    18 FORMAT(10X,I5,11X,I5,11X,I5,11X,I5,5X,F15.4)
 C.... CONSTANTS
+C.... COMPUTE SHEAR MODULUS
    14 G=E/(2.*(1.+PO))
       C12=PO
+C.... COMPUTE H' HARDENING FACTOR
       HL=E*ET/(E-ET)
       C13=PO/(1.+PO)
       C11=PO

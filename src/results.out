@@ -1,0 +1,56 @@
+
+
+
+
+
+
+
+
+
+
+                        * * *  B O U N D A R Y  E L E M E N T  M E T H O D  A P P L I E D  T O  * * *
+
+                        * * *  P L A N E  E L A S T O P L A S T I C  P R O B L E M S            * * *
+
+
+
+ STUDY CASE: Unit square              
+
+
+             * STANDARD IN. STR. *
+
+
+               NO. ELEMENTS =    8
+
+               NO.    CELLS =    0
+
+               NO.    NODES =    8
+
+               NO.   POINTS =    1
+
+               PROBL.  TYPE =    1
+
+               SYMME.  TYPE =    0
+
+
+               MATERIAL PROPERTIES
+
+               Y. CRIT.=         3
+
+               E       =       10.
+
+               ET      =        0.
+
+               FY      =        0.00000
+
+               POISSON =        0.30000
+
+               C       =        0.00000
+
+               PHI     =       20.00000
+
+
+                              COORDINATES OF BOUNDARY NODES
+
+            NODE              X               Y
+
