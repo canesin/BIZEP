@@ -12,8 +12,8 @@
 FORTRAN_COMPILER = gfortran
 
 all: src/BIZEP.F
-	$(FORTRAN_COMPILER) -O2 -std=legacy --fixed-form -g \
-		-o bin/BIZEP \
+	$(FORTRAN_COMPILER) -Og -g -Wall -Wextra -fcheck=all -std=legacy --fixed-form \
+		-o bin/BIZEP.exe \
 		src/BIZEP.F
 
 clean:

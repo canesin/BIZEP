@@ -4,12 +4,12 @@ C.... BOUNDARY ELEMENT METHOD
 C.... J. C. DE FARIA TELLES
 C.... =================================================================
 C.... NE - number of elements
-C.... NC - ???
+C.... NC - ??? number of connections
 C.... NN - Numbert of nodes
 C.... NP - Number of internal points
 C.... IPL - Index for type of problem, 1-plane stress/2-plane strain
 C.... E - Youngs modulus
-C.... ET - ???
+C.... ET - Hardening slope (from Eq. 6.11/6.12)
 C.... SY - ???
 C.... PO - Poissons Ratio
 C.... NN2 - Number of nodes times 2, NN2=2*NN
@@ -26,13 +26,14 @@ C.... YSYM - Y coordinates of symmetry plane
 C.... INFB - Infinite boundary index (1-infinite case, 0-bounded case)
 C.... C13 to C18 - ???
 C.... SNPHI - ???
-C.... IYIED - ???
+C.... IYIED - Yield criteria 1-Tesca/2-Von Mises/3-Mohr-Coulomb/4-Drucker-Prager
 C.... ITECH - ???
 C.... D - Kronecker delta
 C.... XI - Acissas of Gaussian integration points
 C.... W - Weights of Gausssian integration points
 C.... IDUP - Double nodes vector (=0 no double node, =N N double nodes)
 C.... =================================================================
+
       COMMON /RW/ IRE,IWR
       COMMON /A/ X(73),Y(73),D(2,2),A(6,3),W(6,3)
       COMMON /A1/ ISYM(73),INC(33,2),IDUP(73),ICC(110,3),AR(110),C(33)
@@ -40,14 +41,15 @@ C.... =================================================================
       COMMON /A3/ IFIP(76),U(76),P(76),S(73,4),SR(219),DSR(219),DSE(219)
      *,XM(76),XN(219),EPE(73),DEPE(73),SR3(73),SEQ(73),ASEQ(73),DSR3(73)
 C.... BIND INPUTE AND OUTPUT FILES TO IRE AND IRW VARIABLES
-      OPEN(UNIT=11, FILE="input.dat")
-      OPEN(UNIT=12, FILE="results.out")
+      OPEN(UNIT=11, FILE="src/input.dat", STATUS='OLD')
+      OPEN(UNIT=12, FILE="src/results.out")
 C.... INPUT
       IRE=11
       IWR=12
       TOL=0.001
       J=0
 
+C     READ INPUT FILE
       CALL INPUT(NE,NC,NN,NP,IPL,E,ET,SY,PO,NN2,NT,NT3,C1,C2,
      *C3,C4,C5,C6,C7,C8,C9,C10,C11,PER,SM,C12,HL,IDSYM,XSYM,YSYM,INFB,
      *C13,C14,C15,C16,C17,C18,SNPHI,IYIED,ITECH)
@@ -55,13 +57,17 @@ C.... INPUT
 C.... COMPUTE MATRICES
       CALL MATRX(NE,NC,NN,NN2,NT,NT3,C1,C2,C3,C4,C5,C6,C7,C8
      *,C9,C10,C11,PO,IDSYM,XSYM,YSYM,INFB,C15,C16,C17,C18)
+
 C.... SOLVE ELASTIC PROBLEM AND CALCULATE LOAD AT FIRST YIELD
       CALL ELAST(C11,XLAMB,SY,NT3,NT,PER,NN2,FAC,IPRT,IYIED,SNPHI)
       GO TO 3
+
 C.... INCREMENTAL PROCESS
     1 IF(XLAMB.GE.1.)GO TO 4
+
 C.... COMPUTATION OF LOAD FACTOR
       XLAMB=XLAMB+FAC
+
 C.... ITERATIONS
       DO 2 J=1,200
 C.... SOLVE ELASTOPLASTIC PROBLEM AND COMPUTE RESIDUAL STRESS
@@ -73,11 +79,13 @@ C.... INCREMENTS
 C.... VERIFY CONVERGENCE
       IF(IC.EQ.0)GO TO 3
     2 CONTINUE
+
 C.... OUTPUT RESULTS
     3 CALL OUTPT(NN,NT,XLAMB,IPRT,J,SM,C13)
       GO TO 1
     4 STOP
       END
+
       SUBROUTINE INPUT(NE,NC,NN,NP,IPL,E,ET,SY,PO,NN2,NT,NT3,C1,C2,
      *C3,C4,C5,C6,C7,C8,C9,C10,C11,PER,G,C12,HL,IDSYM,XSYM,YSYM,INFB,
      *C13,C14,C15,C16,C17,C18,SNPHI,IYIED,ITECH)
@@ -86,21 +94,25 @@ C.... OUTPUT RESULTS
       COMMON /A1/ ISYM(73),INC(33,2),IDUP(73),ICC(110,3),AR(110),C(33)
       COMMON /A3/ IFIP(76),U(76),P(76),S(73,4),SR(219),DSR(219),DSE(219)
      *,XM(76),XN(219),EPE(73),DEPE(73),SR3(73),SEQ(73),ASEQ(73),DSR3(73)
+      CHARACTER(LEN=25) :: Title
+
       WRITE(IWR,1)
     1 FORMAT(//////////,24X,'* * *  B O U N D A R Y  E L E M E N T  M E
      *T H O D  A P P L I E D  T O  * * *',//,24X,'* * *  P L A N E  E L
      *A S T O P L A S T I C  P R O B L E M S            * * *',///)
+
 C.... TITLE OF PROBLEM
-      READ(IRE,2)
-    2 FORMAT('                                                        ')
-      WRITE(IWR,2)
+      READ(IRE, 2) Title
+      WRITE(IWR, *) 'STUDY CASE: ',Title
+    2 FORMAT(A)
+
 C.... GENERAL INFORMATION ABOUT THE PROBLEM
-      READ(IRE,3)INFB,ITECH,NE,NC,NN,NP,IPL,IDSYM
-    3 FORMAT(2I1,I3,5I5)
-      READ(IRE,70)IYIED,E,ET,SY,PO,CC,PHI
-   70 FORMAT(I5,6F10.0)
+      READ(IRE, 3) INFB, ITECH, NE, NC, NN, NP, IPL, IDSYM
+    3 FORMAT(2I1, I3, 5I5)
+      READ(IRE, 70) IYIED, E, ET, SY, PO, CC, PHI
+   70 FORMAT(I5, 6F10.0)
       SNPHI=SIN(PHI*0.017453292)
-      GO TO (71,71,72,73,80),IYIED
+      GO TO (71,71,72,73,80), IYIED
    72 SY=CC*COS(PHI*0.017453292)
       GO TO 71
    73 SY=6.*CC*COS(PHI*0.017453292)/(1.73205080757*(3.-SNPHI))
@@ -169,10 +181,10 @@ C.... ELEMENT INCIDENCES
    10 FORMAT(//,30X,'ELEMENT INCIDENCES',//,13X,'EL',13X,'N. 1',12X,'N.
      *2',14X,'L',/)
       DO 11 I=1,NE
-      READ(IRE,12)K,INC(K,1),INC(K,2)
+      READ(IRE, 12) K, INC(K,1), INC(K,2)
    12 FORMAT(3I5)
-      II=INC(K,1)
-      IF=INC(K,2)
+      II=INC(K, 1)
+      IF=INC(K, 2)
    11 C(K)=SQRT((X(IF)-X(II))**2+(Y(IF)-Y(II))**2)
       WRITE(IWR,13)(I,INC(I,1),INC(I,2),C(I),I=1,NE)
    13 FORMAT(10X,I5,11X,I5,11X,I5,5X,F15.4)
@@ -181,8 +193,8 @@ C.... CELLS CONNECTIVITY
       WRITE(IWR,17)
    17 FORMAT(//,30X,'CELLS CONNECTIVITY',//,12X,'CELL',12X,'P. 1',12X,'P
      *. 2',12X,'P. 3',14X,'A',/)
-      DO 15 I=1,NC
-      READ(IRE,16)K,ICC(K,1),ICC(K,2),ICC(K,3)
+      DO 15 I=1, NC
+      READ(IRE,16) K, ICC(K, 1), ICC(K, 2), ICC(K, 3)
    16 FORMAT(4I5)
       I1=ICC(K,1)
       I2=ICC(K,2)
@@ -1085,7 +1097,7 @@ C.... STRESS AND THE STRESS INVARIANTS
       SINT3=-3.*ROOT3*VARJ3/(2.*VARJ2*STEFF)
       IF(ABS(SINT3).GT.1.)SINT3=SIGN(1.,SINT3)
       THETA=ASIN(SINT3)/3.
-      GO TO (1,2,3,4,5),IYIED
+      GO TO (1,2,3,4,5), IYIED
 C.... TRESCA
     1 SE=2.*COS(THETA)*STEFF
       RETURN
@@ -1222,4 +1234,3 @@ C.... STRESSES AND PLASTIC STRAINS AT NODES AND POINTS
      *7)
       RETURN
       END
-
