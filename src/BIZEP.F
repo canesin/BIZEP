@@ -267,8 +267,7 @@ C.... BOUNDARY VALUES PRESCRIBED
       PER=PER/100.
       IF(NFIP.EQ.0)GO TO 22
       DO 23 I=1, NFIP
-      READ(IRE, 24) K, P(2*K-1), P(2*K), IFIP(2*K-1), IFIP(2*K)
-   24 FORMAT(I5, 2F10.0, 2I5)
+      READ(IRE, *) K, P(2*K-1), P(2*K), IFIP(2*K-1), IFIP(2*K)
       IND = IFIP(2*K-1) + 2*IFIP(2*K)
       GO TO (25, 26, 27), IND
    25 WRITE(IWR,28) K, P(2*K-1)
