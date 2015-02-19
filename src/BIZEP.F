@@ -20,7 +20,7 @@ C.... NN2 - Number of nodes times 2, NN2 = 2 * NN
 C.... NT - Internal + boundary nodes, NT = NN + NP
 C.... NT3 - ???
 C.... C1 to C11 - Constants needed by fundamental solution
-C.... PER - ???
+C.... PER - Load increment in %
 C.... SM - ???
 C.... C12 - ???
 C.... ISYM - Indicates symmetry (0-no sym, 1-y sym, 2-x sym, 3-xy sym)
@@ -35,6 +35,10 @@ C.... D - Kronecker delta
 C.... XI - Acissas of Gaussian integration points
 C.... W - Weights of Gausssian integration points
 C.... IDUP - Double nodes vector (=0 no double node, =N N double nodes)
+C.... INC - Boundary nodes incidencies
+C.... ICC - Cells conectivity
+C.... NFIP - Number of nodes with displacement
+C.... NDFIP - Number of nodes with nonzero tractions prescribed
 C.... =================================================================
       PROGRAM BIZEP
 
@@ -212,15 +216,14 @@ C.... COMPUTE LENGHT OF ELEMENT
    13 FORMAT(10X, I5, 11X, I5, 11X, I5, 5X, F15.4)
       IF(NC.EQ.0) GO TO 14
 C.... CELLS CONNECTIVITY
-      WRITE(IWR,17)
+      WRITE(IWR, 17)
    17 FORMAT(//,30X,'CELLS CONNECTIVITY',//,12X,'CELL',12X,'P. 1',12X,'P
      *. 2',12X,'P. 3',14X,'A',/)
       DO 15 I=1, NC
-      READ(IRE,16) K, ICC(K, 1), ICC(K, 2), ICC(K, 3)
-   16 FORMAT(4I5)
-      I1=ICC(K,1)
-      I2=ICC(K,2)
-      I3=ICC(K,3)
+      READ(IRE, *) K, ICC(K, 1), ICC(K, 2), ICC(K, 3)
+      I1 = ICC(K, 1)
+      I2 = ICC(K, 2)
+      I3 = ICC(K, 3)
    15 AR(K)=0.5*ABS((Y(I2)-Y(I3))*(X(I1)-X(I3))-(X(I2)-X(I3))*(Y(I1)-Y(I
      *3)))
       WRITE(IWR,18)(I,ICC(I,1),ICC(I,2),ICC(I,3),AR(I),I=1,NC)
@@ -252,39 +255,37 @@ C.... COMPUTE H' HARDENING FACTOR
       C16=C7*C18/8.
       C17=C2*C18/4.
 C.... BOUNDARY VALUES PRESCRIBED
-      DO 19 I=1,NN2
-      P(I)=0.
-      XM(I)=0.
-   19 IFIP(I)=0
-      READ(IRE,20)NFIP,NDFIP,PER
-   20 FORMAT(2I5,F10.0)
-      WRITE(IWR,21)NFIP,NDFIP,PER
+      DO 19 I=1, NN2
+      P(I) = 0.
+      XM(I) = 0.
+   19 IFIP(I) = 0
+      READ(IRE, *) NFIP, NDFIP, PER
+      WRITE(IWR, 21) NFIP, NDFIP, PER
    21 FORMAT(//,15X,'NO. DISPL. PRESC. =',I5,//,15X,'NO. TRACT. PRESC. =
      *',I5,//,15X,'LOAD INCREMENT    =',F10.4,'%',///,15X,'DISPLACEMENTS
      *',//,12X,'NODE',14X,'U',15X,'V',/)
       PER=PER/100.
       IF(NFIP.EQ.0)GO TO 22
-      DO 23 I=1,NFIP
-      READ(IRE,24)K,P(2*K-1),P(2*K),IFIP(2*K-1),IFIP(2*K)
-   24 FORMAT(I5,2F10.0,2I5)
-      IND=IFIP(2*K-1)+2*IFIP(2*K)
-      GO TO (25,26,27),IND
-   25 WRITE(IWR,28)K,P(2*K-1)
-   28 FORMAT(10X,I5,5X,F15.4)
+      DO 23 I=1, NFIP
+      READ(IRE, 24) K, P(2*K-1), P(2*K), IFIP(2*K-1), IFIP(2*K)
+   24 FORMAT(I5, 2F10.0, 2I5)
+      IND = IFIP(2*K-1) + 2*IFIP(2*K)
+      GO TO (25, 26, 27), IND
+   25 WRITE(IWR,28) K, P(2*K-1)
+   28 FORMAT(10X, I5, 5X, F15.4)
       GO TO 23
-   26 WRITE(IWR,29)K,P(2*K)
-   29 FORMAT(10X,I5,21X,F15.4)
+   26 WRITE(IWR, 29) K, P(2*K)
+   29 FORMAT(10X, I5, 21X, F15.4)
       GO TO 23
-   27 WRITE(IWR,30)K,P(2*K-1),P(2*K)
-   30 FORMAT(10X,I5,5X,F15.4,1X,F15.4)
+   27 WRITE(IWR, 30) K, P(2*K-1), P(2*K)
+   30 FORMAT(10X, I5, 5X, F15.4, 1X, F15.4)
    23 CONTINUE
-   22 IF(NDFIP.EQ.0)GO TO 31
-      WRITE(IWR,34)
+   22 IF(NDFIP.EQ.0) GO TO 31
+      WRITE(IWR, 34)
    34 FORMAT(//,15X,'TRACTIONS',//,12X,'NODE',13X,'TX',14X,'TY',/)
-      DO 32 I=1,NDFIP
-      READ(IRE,33)K,P(2*K-1),P(2*K)
-   33 FORMAT(I5,2F10.0)
-   32 WRITE(IWR,30)K,P(2*K-1),P(2*K)
+      DO 32 I=1, NDFIP
+      READ(IRE, *) K, P(2*K - 1), P(2*K)
+   32 WRITE(IWR, 30) K, P(2*K-1), P(2*K)
 C.... INTEGRATION POINTS
    31 A(1,3)=-0.932469514203152
       A(2,3)=-0.661209386466265
@@ -312,6 +313,7 @@ C.... INTEGRATION POINTS
       W(2,1)=1.
       RETURN
       END
+
       SUBROUTINE MATRX(NE,NC,NN,NN2,NT,NT3,C1,C2,C3,C4,C5,C6,C7,C8,
      *C9,C10,C11,PO,IDSYM,XSYM,YSYM,INFB,C15,C16,C17,C18)
       COMMON /A/ X(73),Y(73),D(2,2),A(6,3),W(6,3)
