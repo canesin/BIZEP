@@ -12,7 +12,7 @@
 FORTRAN_COMPILER = gfortran
 
 all: src/BIZEP.F
-	$(FORTRAN_COMPILER) -Og -g -Wall -Wextra -fcheck=all -std=legacy --fixed-form \
+	$(FORTRAN_COMPILER) -Og -g -Wall -Wextra -fcheck=all -std=legacy -static --fixed-form \
 		-o bin/BIZEP.exe \
 		src/BIZEP.F
 

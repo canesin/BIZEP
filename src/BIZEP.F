@@ -16,26 +16,27 @@ C.... SY - ???
 C.... CC - Cohesion
 C.... PHI - Internal Friction angle [in deg]
 C.... PO - Poissons Ratio
-C.... NN2 - Number of nodes times 2, NN2=2*NN
+C.... NN2 - Number of nodes times 2, NN2 = 2 * NN
 C.... NT - Internal + boundary nodes, NT = NN + NP
 C.... NT3 - ???
 C.... C1 to C11 - Constants needed by fundamental solution
 C.... PER - ???
 C.... SM - ???
 C.... C12 - ???
-C.... IDSYM - Symmetry index (0-no sym, 1-y sym, 2-x sym, 3-xy sym)
+C.... ISYM - Indicates symmetry (0-no sym, 1-y sym, 2-x sym, 3-xy sym)
 C.... XSYM - X coordinates of symmetry plane
 C.... YSYM - Y coordinates of symmetry plane
 C.... INFB - Infinite boundary index (1-infinite case, 0-bounded case)
 C.... C13 to C18 - ???
-C.... SNPHI - ???
+C.... SNPHI - Sine of internal friction angle
 C.... IYIED - Yield criteria 1-Tesca/2-Von Mises/3-Mohr-Coulomb/4-Drucker-Prager
-C.... ITECH - ???
+C.... ITECH - Iteration methodology (Section 7.5 page 291)
 C.... D - Kronecker delta
 C.... XI - Acissas of Gaussian integration points
 C.... W - Weights of Gausssian integration points
 C.... IDUP - Double nodes vector (=0 no double node, =N N double nodes)
 C.... =================================================================
+      PROGRAM BIZEP
 
       COMMON /RW/ IRE,IWR
       COMMON /A/ X(73),Y(73),D(2,2),A(6,3),W(6,3)
@@ -89,7 +90,7 @@ C.... OUTPUT RESULTS
     3 CALL OUTPT(NN,NT,XLAMB,IPRT,J,SM,C13)
       GO TO 1
     4 STOP
-      END
+      END PROGRAM BIZEP
 
       SUBROUTINE INPUT(NE,NC,NN,NP,IPL,E,ET,SY,PO,NN2,NT,NT3,C1,C2,
      *C3,C4,C5,C6,C7,C8,C9,C10,C11,PER,G,C12,HL,IDSYM,XSYM,YSYM,INFB,
@@ -108,7 +109,7 @@ C.... OUTPUT RESULTS
 
 C.... TITLE OF PROBLEM
       READ(IRE, 2) Title
-      WRITE(IWR, *) 'STUDY CASE: ',Title
+      WRITE(IWR, *) 'STUDY CASE: ', Title
     2 FORMAT(A)
 
 C.... GENERAL INFORMATION ABOUT THE PROBLEM
@@ -117,15 +118,15 @@ C.... GENERAL INFORMATION ABOUT THE PROBLEM
 C.... LOAD MATERIAL PROPERTIES AND YEILD CRITERIA
       READ(IRE, *) IYIED, E, ET, SY, PO, CC, PHI
 
-      SNPHI=SIN(PHI*0.017453292)
-      GO TO (71,71,72,73,80), IYIED
-   72 SY=CC*COS(PHI*0.017453292)
+      SNPHI = SIN(PHI * 0.017453292)
+      GO TO (71, 71, 72, 73, 80), IYIED
+   72 SY = CC * COS(PHI * 0.017453292)
       GO TO 71
-   73 SY=6.*CC*COS(PHI*0.017453292)/(1.73205080757*(3.-SNPHI))
+   73 SY=6. * CC * COS(PHI  *0.017453292)/(1.73205080757 * (3. - SNPHI))
       GO TO 71
    80 SY=1.73205080757*CC*COS(PHI*0.017453292)/SQRT(3.+SNPHI**2)
 
-   71 IF(INFB.EQ.0)GO TO 60
+   71 IF(INFB.EQ.0) GO TO 60
 
       WRITE(IWR,61)
    61 FORMAT(//,13X,'* INFINITE BOUNDARY *')
@@ -148,61 +149,68 @@ C.... LOAD MATERIAL PROPERTIES AND YEILD CRITERIA
      *F15.5,//,15X,'PHI     =',F15.5,///,30X,'COORDINATES OF BOUNDARY NO
      *DES',//,12X,'NODE',14X,'X',15X,'Y',/)
 
-      NN2=NN*2
-      NT=NN+NP
-      NT3=3*NT
+      NN2 = NN * 2
+      NT = NN + NP
+      NT3 = 3 * NT
 C.... NODES AND POINTS COORDINATES
-      DO 5 I=1,NT
-        READ(IRE,6) K, X(K), Y(K), IDUP(K), ISYM(K)
-    6   FORMAT(I5,2F10.0,2I5)
+      DO 5 I = 1, NT
+        READ(IRE, *) K, X(K), Y(K), IDUP(K), ISYM(K)
+C....   VERIFY IF DOUBLE NODE
         IF(IDUP(K).EQ.0) GO TO 5
-        J=IDUP(K)
-        IDUP(J)=K
-        X(K)=X(J)
-        Y(K)=Y(J)
+        J = IDUP(K)
+        IDUP(J) = K
+        X(K) = X(J)
+        Y(K) = Y(J)
     5 CONTINUE
 
       WRITE(IWR,7) (K, X(K), Y(K), K=1, NN)
-    7 FORMAT(10X,I5,5X,F15.4,1X,F15.4)
-      IF(NP.EQ.0)GO TO 9
-      WRITE(IWR,8)
+    7 FORMAT(10X, I5, 5X, F15.4, 1X, F15.4)
+
+      IF(NP.EQ.0) GO TO 9
+
+      WRITE(IWR, 8)
     8 FORMAT(//,30X,'COORDINATES OF INTERNAL POINTS',//,11X,'POINT',14X,
      *'X',15X,'Y',/)
-      K=NN+1
-      WRITE(IWR,7)(J,X(J),Y(J),J=K,NT)
+
+      K = NN + 1
+
+      WRITE(IWR, 7)(J, X(J), Y(J), J=K, NT)
 C.... NODES AND POINTS AT SYMMETRY LINES
-    9 IF(IDSYM.EQ.0)GO TO 49
-      WRITE(IWR,42)
+    9 IF(IDSYM.EQ.0) GO TO 49
+
+      WRITE(IWR, 42)
    42 FORMAT(//,30X,'BOUNDARY NODES AND INTERNAL POINTS AT SYMMETRY LINE
      *(S)',//,12X,'L. X',12X,'L. Y',/)
-      DO 43 K=1,NT
-      IF(ISYM(K).EQ.0)GO TO 43
-      IZZ=ISYM(K)
-      GO TO (44,45,46),IZZ
-   44 YSYM=Y(K)
-      WRITE(IWR,47)K
-   47 FORMAT(10X,I5)
-      GO TO 43
-   45 XSYM=X(K)
-      WRITE(IWR,48)K
-   48 FORMAT(26X,I5)
-      GO TO 43
-   46 WRITE(IWR,50)K,K
-   50 FORMAT(10X,I5,11X,I5)
+
+      DO 43 K=1, NT
+        IF(ISYM(K).EQ.0) GO TO 43
+        IZZ = ISYM(K)
+        GO TO (44, 45, 46), IZZ
+   44   YSYM = Y(K)
+        WRITE(IWR, 47) K
+   47   FORMAT(10X, I5)
+        GO TO 43
+   45   XSYM = X(K)
+        WRITE(IWR, 48) K
+   48   FORMAT(26X, I5)
+        GO TO 43
+   46   WRITE(IWR, 50) K, K
+   50   FORMAT(10X, I5, 11X, I5)
    43 CONTINUE
+
 C.... ELEMENT INCIDENCES
-   49 WRITE(IWR,10)
+   49 WRITE(IWR, 10)
    10 FORMAT(//,30X,'ELEMENT INCIDENCES',//,13X,'EL',13X,'N. 1',12X,'N.
      *2',14X,'L',/)
-      DO 11 I=1,NE
-      READ(IRE, 12) K, INC(K,1), INC(K,2)
-   12 FORMAT(3I5)
-      II=INC(K, 1)
-      IF=INC(K, 2)
-   11 C(K)=SQRT((X(IF)-X(II))**2+(Y(IF)-Y(II))**2)
-      WRITE(IWR,13)(I,INC(I,1),INC(I,2),C(I),I=1,NE)
-   13 FORMAT(10X,I5,11X,I5,11X,I5,5X,F15.4)
-      IF(NC.EQ.0)GO TO 14
+      DO 11 I=1, NE
+      READ(IRE, *) K, INC(K,1), INC(K,2)
+      II = INC(K, 1)
+      IF = INC(K, 2)
+C.... COMPUTE LENGHT OF ELEMENT
+   11 C(K) = SQRT((X(IF) - X(II))**2 + (Y(IF) - Y(II))**2)
+      WRITE(IWR,13)(I, INC(I, 1), INC(I, 2), C(I), I=1, NE)
+   13 FORMAT(10X, I5, 11X, I5, 11X, I5, 5X, F15.4)
+      IF(NC.EQ.0) GO TO 14
 C.... CELLS CONNECTIVITY
       WRITE(IWR,17)
    17 FORMAT(//,30X,'CELLS CONNECTIVITY',//,12X,'CELL',12X,'P. 1',12X,'P

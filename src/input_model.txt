@@ -1,0 +1,12 @@
+Problem title
+INFB ITECH NE NC NN NP IPL IDSYM
+IYIED E ET SY PO CC PHI
+K	X(K)	Y(K)	IDUP(K)	ISYM(K)
+...
+K	X(K)	Y(K)	IDUP(K)	ISYM(K)
+J	X(J)	Y(J)	ISYM(J)
+...
+J	X(J)	Y(J)	ISYM(J)
+k	INC(K,1)	INC(K,2)
+...
+k	INC(K,1)	INC(K,2)
