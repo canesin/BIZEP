@@ -1,12 +1,14 @@
 Problem title
-INFB	ITECH	NE	NC	NN	NP	IPL	IDSYM
-IYIED	E	ET	SY	PO	CC	PHI
-K	X(K)	Y(K)	IDUP(K)	ISYM(K)
+INFB	ITECH	NE	NC	NN	NP	IPL	IDSYM 		# Case settings
+IYIED	E	ET	SY	PO	CC	PHI 				# Material modelling
+K	X(K)	Y(K)	IDUP(K)	ISYM(K) 			# Boundary nodes
 ...
-J	X(J)	Y(J)	ISYM(J)
+J	X(J)	Y(J)	ISYM(J) 					# Internal Points
 ...
-K	INC(K,1)	INC(K,2)
+K	INC(K,1)	INC(K,2) 						# Boundary incidences
 ...
-K	ICC(K, 1)	ICC(K, 2)	ICC(K, 3)
+K	ICC(K, 1)	ICC(K, 2)	ICC(K, 3) 			# Cells connectivity
 ...
-NFIP	NDFIP	PER
+NFIP	NDFIP	PER								# B.C.s settings
+K	P(2*K-1)	P(2*K)	IFIP(2*K-1)	IFIP(2*K)	# Displacements
+K	P(2*K - 1)	P(2*K)							# Tractions

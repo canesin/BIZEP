@@ -23,6 +23,7 @@ C.... C1 to C11 - Constants needed by fundamental solution
 C.... PER - Load increment in %
 C.... SM - ???
 C.... C12 - ???
+C.... IFIP - Index for boundary type, 0-zero traction, 1-prescribed displacement
 C.... ISYM - Indicates symmetry (0-no sym, 1-y sym, 2-x sym, 3-xy sym)
 C.... XSYM - X coordinates of symmetry plane
 C.... YSYM - Y coordinates of symmetry plane
@@ -265,20 +266,23 @@ C.... BOUNDARY VALUES PRESCRIBED
      *',I5,//,15X,'LOAD INCREMENT    =',F10.4,'%',///,15X,'DISPLACEMENTS
      *',//,12X,'NODE',14X,'U',15X,'V',/)
       PER=PER/100.
-      IF(NFIP.EQ.0)GO TO 22
+
+      IF(NFIP.EQ.0) GO TO 22
+
       DO 23 I=1, NFIP
-      READ(IRE, *) K, P(2*K-1), P(2*K), IFIP(2*K-1), IFIP(2*K)
-      IND = IFIP(2*K-1) + 2*IFIP(2*K)
-      GO TO (25, 26, 27), IND
-   25 WRITE(IWR,28) K, P(2*K-1)
-   28 FORMAT(10X, I5, 5X, F15.4)
-      GO TO 23
-   26 WRITE(IWR, 29) K, P(2*K)
-   29 FORMAT(10X, I5, 21X, F15.4)
-      GO TO 23
-   27 WRITE(IWR, 30) K, P(2*K-1), P(2*K)
-   30 FORMAT(10X, I5, 5X, F15.4, 1X, F15.4)
+        READ(IRE, *) K, P(2*K-1), P(2*K), IFIP(2*K-1), IFIP(2*K)
+        IND = IFIP(2*K-1) + 2*IFIP(2*K)
+        GO TO (25, 26, 27), IND
+   25   WRITE(IWR,28) K, P(2*K-1)
+   28   FORMAT(10X, I5, 5X, F15.4)
+        GO TO 23
+   26   WRITE(IWR, 29) K, P(2*K)
+   29   FORMAT(10X, I5, 21X, F15.4)
+        GO TO 23
+   27   WRITE(IWR, 30) K, P(2*K-1), P(2*K)
+   30   FORMAT(10X, I5, 5X, F15.4, 1X, F15.4)
    23 CONTINUE
+
    22 IF(NDFIP.EQ.0) GO TO 31
       WRITE(IWR, 34)
    34 FORMAT(//,15X,'TRACTIONS',//,12X,'NODE',13X,'TX',14X,'TY',/)
@@ -336,15 +340,15 @@ C.... CLEAR ARRAYS
     4 DB(I,J)=0.
       IFA=1
       NIF=1
-      IF(IDSYM.EQ.1)IFA=2
+      IF(IDSYM.EQ.1) IFA = 2
       IF(IDSYM.NE.2)GO TO 60
       IFA=3
       NIF=2
-   60 IF(IDSYM.EQ.3)IFA=4
+   60 IF(IDSYM.EQ.3) IFA = 4
 C.... TEST FOR INFINITE BOUNDARY
-      IF(INFB.EQ.0)GO TO 90
+      IF(INFB.EQ.0) GO TO 90
       DO 91 I=1,NN2
-      IF(IFIP(I).NE.0)GO TO 92
+      IF(IFIP(I).NE.0) GO TO 92
       DI(I,I)=1.
       GO TO 91
    92 XM(I)=-P(I)
