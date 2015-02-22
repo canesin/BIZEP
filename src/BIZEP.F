@@ -237,7 +237,8 @@ C.... COMPUTE H' HARDENING FACTOR
       HL=E*ET/(E-ET)
       C13=PO/(1.+PO)
       C11=PO
-      IF(IPL-1)40,40,41
+C.... If IPL = 1 (plane-stress) them assertion is false
+      IF(IPL-1) 40, 40, 41
    40 PO=C13
       C11=0.
    41 C2=3.-4.*PO
@@ -256,6 +257,7 @@ C.... COMPUTE H' HARDENING FACTOR
       C16=C7*C18/8.
       C17=C2*C18/4.
 C.... BOUNDARY VALUES PRESCRIBED
+C.... Zero P am XM matrix,  XM to be right side vector, P vector of loads
       DO 19 I=1, NN2
       P(I) = 0.
       XM(I) = 0.

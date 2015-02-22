@@ -1,9 +1,9 @@
 # ============================================================================
-# Name        : Makefile
-# Author      : 
+# Name        : BIZEP - Plastic BEM for COPPE class BEM-II
+# Author      : J. C. DE FARIA TELLES 
 # Version     :
-# Copyright   : Your copyright notice
-# Description : Makefile for Hello World in Fortran
+# Copyright   : J. C. DE FARIA TELLES
+# Description : Makefile for debug Fortran source
 # ============================================================================
 
 .PHONY: all clean
